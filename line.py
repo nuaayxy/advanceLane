@@ -29,3 +29,6 @@ class Line():
         self.allx = None  
         #y values for detected line pixels
         self.ally = None  
+    
+    def is_valid(self):
+        return true
