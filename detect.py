@@ -368,6 +368,11 @@ def main():
     
 #    example = cv2.imread("./examples/warped_straight_lines.jpg")
 #    cv2.imshow("k",example)
+    frame_width = int(cap.get(3)) 
+    frame_height = int(cap.get(4)) 
+   
+    size = (frame_width, frame_height) 
+    result = cv2.VideoWriter('filename.avi',  cv2.VideoWriter_fourcc(*'MJPG'), 30, size) 
 
     while(cap.isOpened()):
         ret, frame = cap.read()
@@ -385,14 +390,15 @@ def main():
 #        leftx, lefty, rightx, righty, out_img = find_lane_pixels(warped)
         out_img,left_fit ,right_fit = fit_polynomial(warped)    
         measure_curvature_pixels(left_fit, right_fit ) 
-        result  = drawlane(warped, left_fit, right_fit, np.linalg.inv(M), frame)
+        lane_result  = drawlane(warped, left_fit, right_fit, np.linalg.inv(M), frame)
         #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 #        plt.draw()
 #        plt.axis("off")
 #        plt.imshow(out_img)
 #        plt.show()
 #        plt.close()
-        cv2.imshow("a", result)
+        cv2.imshow("a", lane_result)
+        result.write(lane_result) 
 
 
         if cv2.waitKey(5) & 0xFF == ord('q'):
