@@ -114,13 +114,13 @@ def search_around_poly(binary_warped):
 
 def find_lane_pixels(binary_warped):
     # Take a histogram of the bottom half of the image
-    histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,100:], axis=0)
+    histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
     # Create an output image to draw on and visualize the result
     out_img = np.dstack((binary_warped, binary_warped, binary_warped))
     # Find the peak of the left and right halves of the histogram
     # These will be the starting point for the left and right lines
-    midpoint = np.int(histogram.shape[0]//2)
-    leftx_base = np.argmax(histogram[:midpoint])
+    midpoint = np.int64(histogram.shape[0]//2)
+    leftx_base = np.argmax(histogram[ 0:midpoint])
     rightx_base = np.argmax(histogram[midpoint:]) + midpoint
 
     # HYPERPARAMETERS
@@ -213,6 +213,7 @@ def fit_polynomial(binary_warped):
         left_fitx = 1*ploty**2 + 1*ploty
         right_fitx = 1*ploty**2 + 1*ploty
 
+    
     ## Visualization ##
     # Colors in the left and right lane regions
     out_img[lefty, leftx] = [255, 0, 0]
@@ -280,43 +281,6 @@ def pipeline(img, s_thresh=(200, 255), sx_thresh=(20, 200)):
 
 
 
-def toBinary(img):
-    # Convert to HLS color space and separate the S channel
-    # Note: img is the undistorted image
-    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-    s_channel = hls[:,:,2]
-    
-    # Grayscale image
-    # NOTE: we already saw that standard grayscaling lost color information for the lane lines
-    # Explore gradients in other colors spaces / color channels to see what might work better
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    
-    # Sobel x
-    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0) # Take the derivative in x
-
-    abs_sobelx = np.absolute(sobelx) # Absolute x derivative to accentuate lines away from horizontal
-    scaled_sobel = np.uint8(255*abs_sobelx/np.max(abs_sobelx))
-    
-    # Threshold x gradient
-    thresh_min = 20
-    thresh_max = 100
-    sxbinary = np.zeros_like(scaled_sobel)
-    sxbinary[(scaled_sobel >= thresh_min) & (scaled_sobel <= thresh_max)] = 1
-    
-    # Threshold color channel
-    s_thresh_min = 170
-    s_thresh_max = 255
-    s_binary = np.zeros_like(s_channel)
-    s_binary[(s_channel >= s_thresh_min) & (s_channel <= s_thresh_max)] = 1
-    
-    # Stack each channel to view their individual contributions in green and blue respectively
-    # This returns a stack of the two binary images, whose components you can see as different colors
-    color_binary = np.dstack(( np.zeros_like(sxbinary), sxbinary, s_binary)) * 255
-    
-    # Combine the two binary thresholds
-    combined_binary = np.zeros_like(sxbinary)
-    combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
-
 def calibrateCamera():
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     objp = np.zeros((6*9,3), np.float32)
@@ -368,6 +332,7 @@ def measure_curvature_pixels(left_fit_cr, right_fit_cr ):
     # Calculation of R_curve (radius of curvature)
     left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
     right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
+    print(left_curverad, 'm', right_curverad, 'm')
     return left_curverad, right_curverad
 
 
@@ -406,8 +371,6 @@ def main():
         
         undist = cv2.undistort(frame, mtx, dist, None, mtx)
              # Given src and dst points, calculate the perspective transform matrix
-             
-    
         src = np.float32([[550,450],[700,450], [200,700],[1150,700]] )
         dst = np.float32([[320,0],[950,0], [320,700],[950,700]] )
         M = cv2.getPerspectiveTransform(src, dst)
@@ -415,16 +378,15 @@ def main():
         # Warp the image using OpenCV warpPerspective()
         warped = cv2.warpPerspective(undist, M, img_size)
 #        leftx, lefty, rightx, righty, out_img = find_lane_pixels(warped)
-        out_img,_,_ = fit_polynomial(warped)
-        
-    
+        out_img,left_fit ,right_fit = fit_polynomial(warped)    
+        measure_curvature_pixels(left_fit, right_fit )    
         #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 #        plt.draw()
-        plt.axis("off")
-        plt.imshow(out_img)
-        plt.show()
-        plt.close()
-#        cv2.imshow("a", out_img)
+#        plt.axis("off")
+#        plt.imshow(out_img)
+#        plt.show()
+#        plt.close()
+        cv2.imshow("a", out_img)
 
 
         if cv2.waitKey(5) & 0xFF == ord('q'):
