@@ -378,6 +378,7 @@ def main():
         ret, frame = cap.read()
         
         frame_binary = pipeline(frame)
+        cv2.imshow("b", frame_binary)
         
         undist = cv2.undistort(frame_binary, mtx, dist, None, mtx)
              # Given src and dst points, calculate the perspective transform matrix
@@ -387,6 +388,7 @@ def main():
         img_size = (undist.shape[1], undist.shape[0])
         # Warp the image using OpenCV warpPerspective()
         warped = cv2.warpPerspective(undist, M, img_size)
+        cv2.imshow("c", warped)
 #        leftx, lefty, rightx, righty, out_img = find_lane_pixels(warped)
         out_img,left_fit ,right_fit = fit_polynomial(warped)    
         measure_curvature_pixels(left_fit, right_fit ) 
@@ -398,7 +400,7 @@ def main():
 #        plt.show()
 #        plt.close()
         cv2.imshow("a", lane_result)
-        result.write(lane_result) 
+#        result.write(lane_result) 
 
 
         if cv2.waitKey(5) & 0xFF == ord('q'):
