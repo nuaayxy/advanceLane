@@ -336,10 +336,14 @@ def measure_curvature_pixels(left_fit_cr, right_fit_cr ):
     return left_curverad, right_curverad
 
 
-def drawlane(warped, ploty, left_fitx, right_fitx, M, undist):
+def drawlane(warped, left_fit, right_fit, M, undist):
     # Create an image to draw the lines on
     warp_zero = np.zeros_like(warped).astype(np.uint8)
     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+    
+    ploty = np.linspace(0, 719, num=720)# to cover same y-range as image
+    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
     
     # Recast the x and y points into usable format for cv2.fillPoly()
     pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
@@ -350,10 +354,11 @@ def drawlane(warped, ploty, left_fitx, right_fitx, M, undist):
     cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
     
     # Warp the blank back to original image space using inverse perspective matrix (Minv)
-    newwarp = cv2.warpPerspective(color_warp, M.inverse(), (image.shape[1], image.shape[0])) 
+    newwarp = cv2.warpPerspective(color_warp, M, (undist.shape[1], undist.shape[0])) 
     # Combine the result with the original image
     result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
-    plt.imshow(result)
+    #plt.imshow(result)
+    return result
 
 
 def main():
@@ -367,9 +372,9 @@ def main():
     while(cap.isOpened()):
         ret, frame = cap.read()
         
-        frame = pipeline(frame)
+        frame_binary = pipeline(frame)
         
-        undist = cv2.undistort(frame, mtx, dist, None, mtx)
+        undist = cv2.undistort(frame_binary, mtx, dist, None, mtx)
              # Given src and dst points, calculate the perspective transform matrix
         src = np.float32([[550,450],[700,450], [200,700],[1150,700]] )
         dst = np.float32([[320,0],[950,0], [320,700],[950,700]] )
@@ -379,14 +384,15 @@ def main():
         warped = cv2.warpPerspective(undist, M, img_size)
 #        leftx, lefty, rightx, righty, out_img = find_lane_pixels(warped)
         out_img,left_fit ,right_fit = fit_polynomial(warped)    
-        measure_curvature_pixels(left_fit, right_fit )    
+        measure_curvature_pixels(left_fit, right_fit ) 
+        result  = drawlane(warped, left_fit, right_fit, np.linalg.inv(M), frame)
         #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 #        plt.draw()
 #        plt.axis("off")
 #        plt.imshow(out_img)
 #        plt.show()
 #        plt.close()
-        cv2.imshow("a", out_img)
+        cv2.imshow("a", result)
 
 
         if cv2.waitKey(5) & 0xFF == ord('q'):
