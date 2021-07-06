@@ -1,8 +1,12 @@
 ## Advanced Lane Finding
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
-![Lanes Image](./examples/example_output.jpg)
 
-In this project, we create a pipeline to identify the lane boundaries in a video,
+
+In this project, we create a pipeline to identify the lane boundaries in a video, 
+the main function and code in detect.py
+![code](./detect.py)
+I saved examples of the output from each stage in the folder called `output_images`
+There is also a video result
+![output](.//output_images/output.avi)
 
 
 The Project
@@ -23,6 +27,5 @@ The steps of this project are the following:
 ![lane boundry](.//output_images/lane.png)
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
-I saved examples of the output from each stage in the folder called `output_images`
-There is also a video result
-![output](.//output_images/output.avi)
+[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
+![Lanes Image](./examples/example_output.jpg)
