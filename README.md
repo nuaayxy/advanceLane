@@ -29,3 +29,5 @@ The steps of this project are the following:
 
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 ![Lanes Image](./examples/example_output.jpg)
+![Lanes Image](./final_output_screenshot_07.07.2021.png)
+
