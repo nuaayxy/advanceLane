@@ -249,19 +249,19 @@ def fit_polynomial(binary_warped):
         plt.imshow(binary_warped)
 
     #do an moving average of 8 previous fits
-    # if len(average_fit_right) < 8:
-    #     average_fit_right.append(left_fit)
-    #     average_fit_left.append(right_fit)
-    # else:
-    #     # average_fit_right.append(left_fit)
-    #     # average_fit_left.append(right_fit)
-    #     average_fit_left.pop
-    #     average_fit_right.pop
-    # left_fit=  np.average(average_fit_left,axis=0)
-    # right_fit= np.average(average_fit_right,axis=0)
+    if len(average_fit_right) < 8:
+        average_fit_right.append(left_fit)
+        average_fit_left.append(right_fit)
+    else:
+        # average_fit_right.append(left_fit)
+        # average_fit_left.append(right_fit)
+        average_fit_left.pop(0)
+        average_fit_right.pop(0)
+    left_fit=  np.average(average_fit_left,axis=0)
+    right_fit= np.average(average_fit_right,axis=0)
 
-    # pre_right_fit = right_fit
-    # pre_left_fit = left_fit
+    pre_right_fit = right_fit
+    pre_left_fit = left_fit
 
     return out_img, left_fit ,right_fit
 
