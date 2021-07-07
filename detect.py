@@ -470,7 +470,7 @@ def main():
         cv2.putText(lane_result, "right curvature: "+ str(int(right_curve)) + " m",(100,150),cv2.FONT_HERSHEY_SIMPLEX,1,(255,100,0),2)
         cv2.putText(lane_result, "vehicle is "+ str(round(mid,3)) + "m from center",(100,200),cv2.FONT_HERSHEY_SIMPLEX,1,(255,100,0),2)
         cv2.imshow("final_output", lane_result)
-#        result.write(lane_result) 
+        result.write(lane_result) 
 
 
         if cv2.waitKey(5) & 0xFF == ord('q'):
