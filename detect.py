@@ -10,14 +10,20 @@ import cv2
 import glob
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from numpy.lib.function_base import average
 import line
 #%matplotlib qt
 
 ## previous poly
 # Polynomial fit values from the previous frame
 # Make sure to grab the actual values from the previous step in your project!
+# allthese should be in object orientated progarmming but here just quick 
 left_fit = np.array([ 2.13935315e-04, -3.77507980e-01,  4.76902175e+02])
 right_fit = np.array([4.17622148e-04, -4.93848953e-01,  1.11806170e+03])
+average_fit_left = []
+average_fit_right = []
+pre_left_fit =  np.array([ 2.13935315e-04, -3.77507980e-01,  4.76902175e+02])
+pre_right_fit = np.array([4.17622148e-04, -4.93848953e-01,  1.11806170e+03])
 
 def warper(img, src, dst):
     # Compute and apply perpective transform
@@ -49,14 +55,14 @@ def fit_poly(img_shape, leftx, lefty, rightx, righty):
     
     return left_fitx, right_fitx, ploty
 
-def search_around_poly(binary_warped):
+def search_around_poly(binary_warped, left_fit, right_fit):
     # HYPERPARAMETER
     # Choose the width of the margin around the previous polynomial to search
-    # The quiz grader expects 100 here, but feel free to tune on your own!
     margin = 100
 
     # Grab activated pixels
     nonzero = binary_warped.nonzero()
+    
     nonzeroy = np.array(nonzero[0])
     nonzerox = np.array(nonzero[1])
     
@@ -76,6 +82,8 @@ def search_around_poly(binary_warped):
     lefty = nonzeroy[left_lane_inds] 
     rightx = nonzerox[right_lane_inds]
     righty = nonzeroy[right_lane_inds]
+
+    # print( (leftx.size + rightx.size) / np.shape(nonzero)[1] )
 
     # Fit new polynomials
     left_fitx, right_fitx, ploty = fit_poly(binary_warped.shape, leftx, lefty, rightx, righty)
@@ -108,13 +116,15 @@ def search_around_poly(binary_warped):
     plt.plot(left_fitx, ploty, color='yellow')
     plt.plot(right_fitx, ploty, color='yellow')
     ## End visualization steps ##
+
+    # cv2.imshow('search', result)
     
     return result
 
 
 def find_lane_pixels(binary_warped):
     # Take a histogram of the bottom half of the image
-    histogram = np.sum(binary_warped[binary_warped.shape[0]//2:-30, :], axis=0)
+    histogram = np.sum(binary_warped[binary_warped.shape[0]//2:-20, :], axis=0)
     # Create an output image to draw on and visualize the result
     out_img = np.dstack((binary_warped, binary_warped, binary_warped))
     # Find the peak of the left and right halves of the histogram
@@ -127,11 +137,11 @@ def find_lane_pixels(binary_warped):
 
     # HYPERPARAMETERS
     # Choose the number of sliding windows
-    nwindows = 8
+    nwindows = 10
     # Set the width of the windows +/- margin
     margin = 100
     # Set min5mum number of pixels found to recenter window
-    minpix = 50
+    minpix = 30
 
     # Set height of windows - based on nwindows above and image shape
     window_height = np.int64(binary_warped.shape[0]//nwindows)
@@ -148,7 +158,7 @@ def find_lane_pixels(binary_warped):
     right_lane_inds = []
 
     # Step through the windows one by one
-    for window in range(1,nwindows):
+    for window in range(0,nwindows):
         # Identify window boundaries in x and y (and right and left)
         win_y_low = binary_warped.shape[0] - (window+1)*window_height
         win_y_high = binary_warped.shape[0] - window*window_height
@@ -204,7 +214,11 @@ def fit_polynomial(binary_warped):
     left_fit = np.array([ 2.13935315e-04, -3.77507980e-01,  4.76902175e+02])
     right_fit = np.array([4.17622148e-04, -4.93848953e-01,  1.11806170e+03])
 
-
+    # safe check around previous correctly fit 
+    nonzero = binary_warped.nonzero()
+    ratio = ( (leftx.size + rightx.size) / np.shape(nonzero)[1] )
+    if ratio < 0.8:
+        search_around_poly(binary_warped, pre_left_fit, pre_right_fit)
 
     # Fit a second order polynomial to each using `np.polyfit`
     # print(np.shape(leftx)[0])
@@ -233,6 +247,21 @@ def fit_polynomial(binary_warped):
         plt.plot(right_fitx, ploty, color='yellow')
         
         plt.imshow(binary_warped)
+
+    #do an moving average of 8 previous fits
+    # if len(average_fit_right) < 8:
+    #     average_fit_right.append(left_fit)
+    #     average_fit_left.append(right_fit)
+    # else:
+    #     # average_fit_right.append(left_fit)
+    #     # average_fit_left.append(right_fit)
+    #     average_fit_left.pop
+    #     average_fit_right.pop
+    # left_fit=  np.average(average_fit_left,axis=0)
+    # right_fit= np.average(average_fit_right,axis=0)
+
+    # pre_right_fit = right_fit
+    # pre_left_fit = left_fit
 
     return out_img, left_fit ,right_fit
 
@@ -303,9 +332,9 @@ def pipeline(img, s_thresh=(170, 255), sx_thresh=(40, 200)):
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= s_thresh[0]) & (s_channel <= s_thresh[1])] = 255
 
-    cv2.imshow("luv binary",  LUV_binary)
-    cv2.imshow("edge",  sxbinary)
-    cv2.imshow("lab b channel",  B_binary)
+    # cv2.imshow("luv binary",  LUV_binary)
+    # cv2.imshow("edge",  sxbinary)
+    # cv2.imshow("lab b channel",  B_binary)
 
 
 #     Along with color threshold to the B(range:145-200) in LAB for shading & brightness applying it to R in RGB in final pipeline can also help in detecting the yellow lanes.
@@ -348,12 +377,7 @@ def calibrateCamera():
         if ret == True:
             objpoints.append(objp)
             imgpoints.append(corners)
-    
-            # Draw and display the corners
-            #img = cv2.drawChessboardCorners(img, (9,6), corners, ret)
-            #cv2.imshow('img',img)
-            #cv2.waitKey(500)
-            
+
     cv2.destroyAllWindows()
     img_size = (img.shape[1], img.shape[0])
     ret, mtx, dist, rvecs, tvecs =cv2.calibrateCamera(objpoints, imgpoints,img_size, None, None)
@@ -382,7 +406,7 @@ def measure_curvature_pixels(left_fit_cr, right_fit_cr ):
     mid_point = mid_point * (3.7/700)
     
     print(left_curverad, 'm', right_curverad, 'm', mid_point)
-    return left_curverad, right_curverad
+    return left_curverad, right_curverad, mid_point
 
 
 def drawlane(warped, left_fit, right_fit, M, undist):
@@ -429,32 +453,23 @@ def main():
         # cv2.imshow("b", frame)
      
         undist = cv2.undistort(frame_binary, mtx, dist, None, mtx)
-             # Given src and dst points, calculate the perspective transform matrix
-        # src = np.float32([[550,450],[700,450], [200,700],[1150,700]] )
-        # dst = np.float32([[320,0],[950,0], [320,700],[950,700]] )
-
+             
+        # Given src and dst points, calculate the perspective transform matrix
         src = np.float32([[568,470],[717,470], [260,680],[1043,680]] )
         dst = np.float32([[200,0],  [1000,0],[200,680], [1000,680]])
-        w = frame_width
-        h = frame_height
-        print(w, h)
-        # src = np.float32([(575,464),
-        #                 (707,464), 
-        #                 (258,682), 
-        #                 (1049,682)])
-        # dst = np.float32([(450,0),
-        #                 (w-450,0),
-        #                 (450,h),
-        #                 (w-450,h)])
         M = cv2.getPerspectiveTransform(src, dst)
+
         img_size = (undist.shape[1], undist.shape[0])
         # Warp the image using OpenCV warpPerspective()
         warped = cv2.warpPerspective(undist, M, img_size)
         out_img,left_fit ,right_fit = fit_polynomial(warped)   
         cv2.imshow("d", out_img)
-        measure_curvature_pixels(left_fit, right_fit ) 
+        left_curve, right_curve, mid = measure_curvature_pixels(left_fit, right_fit ) 
         lane_result  = drawlane(warped, left_fit, right_fit, np.linalg.inv(M), frame)
-        cv2.imshow("a", lane_result)
+        cv2.putText(lane_result, "left curvature: "+ str(int(left_curve)) + " m",(100,100),cv2.FONT_HERSHEY_SIMPLEX,1,(255,100,0),2)
+        cv2.putText(lane_result, "right curvature: "+ str(int(right_curve)) + " m",(100,150),cv2.FONT_HERSHEY_SIMPLEX,1,(255,100,0),2)
+        cv2.putText(lane_result, "vehicle is "+ str(round(mid,3)) + "m from center",(100,200),cv2.FONT_HERSHEY_SIMPLEX,1,(255,100,0),2)
+        cv2.imshow("final_output", lane_result)
 #        result.write(lane_result) 
 
 
