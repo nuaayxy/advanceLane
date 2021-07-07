@@ -6,8 +6,16 @@ the main function and code in detect.py
 ![code](./detect.py)
 I saved examples of the output from each stage in the folder called `output_images`
 There is also a video result
-![output](.//output_images/output.avi)
+![output](.//final_output.avi)
 
+There are issues when in the shadows or light changes suddenly, the lanes detected will tend to fail, then what i rely on is the previously successfully detected lines.
+There are several safe proof way to avoid sudden jump
+
+* check number of detected binary pixels and if below threshold we search around previous detected poly
+* use a moving average of the lane filter away some jumps
+* Use of different color spaces and combine them together such as LAB/HSV with gradients
+
+Futher improvement would be using deep learning method for more robust detection especially these edge cases when lighting changes rapidly and we cannot hand engineer everything
 
 The Project
 ---
@@ -27,7 +35,6 @@ The steps of this project are the following:
 ![lane boundry](.//output_images/lane.png)
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
-![Lanes Image](./examples/example_output.jpg)
+
 ![Lanes Image](./final_output_screenshot_07.07.2021.png)
 
